@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DELTA - Shark Location Prediction</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(#b5b0ba 10%, #091f80 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            gap: 15px;
+        }
+
+        .header img {
+            width: 60px;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            color: #091f80;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .mode-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            background: #f7fafc;
+            padding: 5px;
+            border-radius: 10px;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .mode-btn.active {
+            background: #091f80;
+            color: white;
+        }
+
+        .mode-content {
+            display: none;
+        }
+
+        .mode-content.active {
+            display: block;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+        }
+
+        input[type="number"], input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #091f80;
+        }
+
+        .file-upload-area {
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .file-upload-area:hover {
+            border-color: #091f80;
+            background: #f7fafc;
+        }
+
+        .file-upload-area.dragover {
+            border-color: #091f80;
+            background: #e6f2ff;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            flex: 1;
+            padding: 15px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: #091f80;
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #061558;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(9, 31, 128, 0.4);
+        }
+
+        .btn-success {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-success:hover:not(:disabled) {
+            background: #38a169;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(72, 187, 120, 0.4);
+        }
+
+        .btn-secondary {
+            background: #718096;
+            color: white;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #4a5568;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .results {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f7fafc;
+            border-radius: 8px;
+        }
+
+        .results h2 {
+            color: #2d3748;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .result-label {
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        .result-value {
+            color: #2d3748;
+            font-family: 'Courier New', monospace;
+        }
+
+        .batch-results {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+
+        .batch-result-row {
+            padding: 10px;
+            margin-bottom: 10px;
+            background: white;
+            border-radius: 5px;
+            border-left: 4px solid #48bb78;
+        }
+
+        .batch-result-row.error {
+            border-left-color: #f56565;
+            background: #fff5f5;
+        }
+
+        .plot-container {
+            margin-top: 30px;
+        }
+
+        .plot-container img {
+            width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .loading {
+            text-align: center;
+            color: #091f80;
+            font-weight: 600;
+            margin-top: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #091f80;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .info-box {
+            background: #bee3f8;
+            color: #2c5282;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .csv-format {
+            font-family: 'Courier New', monospace;
+            background: #2d3748;
+            color: #48bb78;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+
+        .file-name {
+            margin-top: 10px;
+            font-weight: 600;
+            color: #48bb78;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="https://static.vecteezy.com/system/resources/previews/017/177/825/non_2x/greek-alphabet-symbol-delta-on-transparent-background-free-png.png" 
+                 alt="Delta Logo">
+            <h1>DELTA.</h1>
+        </div>
+        <h2 style="text-align: center; color: #333;">Shark Location Predictor</h2>
+        <p class="subtitle">Advanced ocean current analysis for shark migration prediction</p>
+
+        <!-- Mode Selector -->
+        <div class="mode-selector">
+            <button class="mode-btn active" onclick="switchMode('single')">Single Location</button>
+            <button class="mode-btn" onclick="switchMode('batch')">Batch Upload</button>
+        </div>
+
+        <!-- Single Location Mode -->
+        <div id="singleMode" class="mode-content active">
+            <div class="input-group">
+                <label for="latitude">Shark Latitude (degrees)</label>
+                <input type="number" id="latitude" step="any" placeholder="e.g., 34.5678" required>
+            </div>
+
+            <div class="input-group">
+                <label for="longitude">Shark Longitude (degrees)</label>
+                <input type="number" id="longitude" step="any" placeholder="e.g., -120.1234" required>
+            </div>
+
+            <div class="button-group">
+                <button class="btn-primary" id="predictBtn">Find Predicted Location</button>
+                <button class="btn-success hidden" id="plotBtn">Generate Plot</button>
+            </div>
+
+            <div id="loading" class="loading hidden">
+                <div class="spinner"></div>
+                <p>Processing data...</p>
+            </div>
+
+            <div id="error" class="error hidden"></div>
+
+            <div id="results" class="results hidden">
+                <h2>Predicted Shark Movement</h2>
+                <div class="result-item">
+                    <span class="result-label">Predicted Latitude:</span>
+                    <span class="result-value" id="predLat">-</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">Predicted Longitude:</span>
+                    <span class="result-value" id="predLon">-</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">Distance:</span>
+                    <span class="result-value" id="distance">-</span>
+                </div>
+            </div>
+
+            <div id="plotContainer" class="plot-container hidden">
+                <h2 style="margin-bottom: 15px; color: #2d3748;">Visualization</h2>
+                <img id="plotImage" src="" alt="Shark prediction plot">
+                <div class="button-group" style="margin-top: 20px;">
+                    <button class="btn-secondary" id="downloadBtn">Download Plot</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Batch Upload Mode -->
+        <div id="batchMode" class="mode-content">
+            <div class="info-box">
+                <strong>CSV Format:</strong> Your file should contain columns named 'latitude' (or 'lat') and 'longitude' (or 'lon')
+                <div class="csv-format">
+                    latitude,longitude<br>
+                    34.5678,-120.1234<br>
+                    35.1234,-119.5678
+                </div>
+            </div>
+
+            <div class="file-upload-area" id="fileUploadArea" onclick="document.getElementById('csvFile').click()">
+                <p style="font-size: 3em; margin-bottom: 10px;">📁</p>
+                <p style="font-weight: 600; margin-bottom: 5px;">Drop your CSV file here or click to browse</p>
+                <p style="color: #666; font-size: 0.9em;">Maximum file size: 16MB</p>
+                <input type="file" id="csvFile" accept=".csv" style="display: none;">
+                <p class="file-name hidden" id="fileName"></p>
+            </div>
+
+            <div class="button-group">
+                <button class="btn-primary" id="processBatchBtn" disabled>Process Dataset</button>
+                <button class="btn-secondary" id="downloadCsvBtn" disabled>Download Results CSV</button>
+            </div>
+
+            <div id="batchLoading" class="loading hidden">
+                <div class="spinner"></div>
+                <p>Processing batch data...</p>
+            </div>
+
+            <div id="batchError" class="error hidden"></div>
+
+            <div id="batchResults" class="results hidden">
+                <h2>Batch Processing Results</h2>
+                <p style="margin-bottom: 15px;">Total processed: <strong id="totalProcessed">0</strong></p>
+                <div class="batch-results" id="batchResultsContainer"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let predictedData = null;
+        let batchResultsData = null;
+        let selectedFile = null;
+        let currentPlotBlob = null;
+
+        function switchMode(mode) {
+            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.mode-content').forEach(content => content.classList.remove('active'));
+            
+            if (mode === 'single') {
+                document.querySelector('.mode-btn:first-child').classList.add('active');
+                document.getElementById('singleMode').classList.add('active');
+            } else {
+                document.querySelector('.mode-btn:last-child').classList.add('active');
+                document.getElementById('batchMode').classList.add('active');
+            }
+        }
+
+        function showElement(id) {
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function hideElement(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function showLoading(show) {
+            if (show) {
+                showElement('loading');
+            } else {
+                hideElement('loading');
+            }
+            document.getElementById('predictBtn').disabled = show;
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            showElement('error');
+        }
+
+        function hideError() {
+            hideElement('error');
+        }
+
+        // Single Location Mode
+        document.getElementById('predictBtn').addEventListener('click', async () => {
+            const lat = document.getElementById('latitude').value;
+            const lon = document.getElementById('longitude').value;
+
+            if (!lat || !lon) {
+                showError('Please enter both latitude and longitude');
+                return;
+            }
+
+            hideError();
+            showLoading(true);
+            hideElement('results');
+            hideElement('plotContainer');
+            hideElement('plotBtn');
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        latitude: parseFloat(lat),
+                        longitude: parseFloat(lon)
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    predictedData = {
+                        latitude: parseFloat(lat),
+                        longitude: parseFloat(lon),
+                        closest: {
+                            lat: data.predicted_lat,
+                            lon: data.predicted_lon,
+                            dist: data.distance_km * 1000
+                        }
+                    };
+
+                    document.getElementById('predLat').textContent = data.predicted_lat.toFixed(4);
+                    document.getElementById('predLon').textContent = data.predicted_lon.toFixed(4);
+                    document.getElementById('distance').textContent = data.distance_km.toFixed(2) + ' km';
+
+                    showElement('results');
+                    showElement('plotBtn');
+                } else {
+                    showError(data.error || 'An error occurred');
+                }
+            } catch (error) {
+                showError('Failed to connect to server: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        });
+
+        document.getElementById('plotBtn').addEventListener('click', async () => {
+            if (!predictedData) {
+                showError('Please predict location first');
+                return;
+            }
+
+            hideError();
+            showLoading(true);
+
+            try {
+                const response = await fetch('/generate_plot', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(predictedData)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('plotImage').src = 'data:image/png;base64,' + data.image;
+                    
+                    // Store the base64 data for download
+                    const binaryString = atob(data.image);
+                    const bytes = new Uint8Array(binaryString.length);
+                    for (let i = 0; i < binaryString.length; i++) {
+                        bytes[i] = binaryString.charCodeAt(i);
+                    }
+                    currentPlotBlob = new Blob([bytes], { type: 'image/png' });
+                    
+                    showElement('plotContainer');
+                } else {
+                    showError(data.error || 'Failed to generate plot');
+                }
+            } catch (error) {
+                showError('Failed to generate plot: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        });
+
+        document.getElementById('downloadBtn').addEventListener('click', () => {
+            if (!currentPlotBlob || !predictedData) {
+                showError('Please generate plot first');
+                return;
+            }
+
+            const url = window.URL.createObjectURL(currentPlotBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `shark_prediction_${predictedData.latitude}_${predictedData.longitude}.png`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        });
+
+        // Batch Upload Mode
+        const fileUploadArea = document.getElementById('fileUploadArea');
+        const csvFileInput = document.getElementById('csvFile');
+
+        csvFileInput.addEventListener('change', (e) => {
+            handleFileSelect(e.target.files[0]);
+        });
+
+        fileUploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fileUploadArea.classList.add('dragover');
+        });
+
+        fileUploadArea.addEventListener('dragleave', () => {
+            fileUploadArea.classList.remove('dragover');
+        });
+
+        fileUploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fileUploadArea.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                handleFileSelect(e.dataTransfer.files[0]);
+            }
+        });
+
+        function handleFileSelect(file) {
+            if (file && file.name.endsWith('.csv')) {
+                selectedFile = file;
+                document.getElementById('fileName').textContent = `Selected: ${file.name}`;
+                showElement('fileName');
+                document.getElementById('processBatchBtn').disabled = false;
+            } else {
+                alert('Please select a valid CSV file');
+            }
+        }
+
+        document.getElementById('processBatchBtn').addEventListener('click', async () => {
+            if (!selectedFile) {
+                return;
+            }
+
+            hideElement('batchError');
+            showElement('batchLoading');
+            hideElement('batchResults');
+            document.getElementById('processBatchBtn').disabled = true;
+            document.getElementById('downloadCsvBtn').disabled = true;
+
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+
+            try {
+                const response = await fetch('/predict_batch', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    batchResultsData = data.results;
+                    displayBatchResults(data.results, data.total_processed);
+                    showElement('batchResults');
+                    document.getElementById('downloadCsvBtn').disabled = false;
+                } else {
+                    showBatchError(data.error || 'An error occurred');
+                }
+            } catch (error) {
+                showBatchError('Failed to process batch: ' + error.message);
+            } finally {
+                hideElement('batchLoading');
+                document.getElementById('processBatchBtn').disabled = false;
+            }
+        });
+
+        function displayBatchResults(results, total) {
+            const container = document.getElementById('batchResultsContainer');
+            container.innerHTML = '';
+            document.getElementById('totalProcessed').textContent = total;
+
+            results.forEach(result => {
+                const row = document.createElement('div');
+                row.className = result.error ? 'batch-result-row error' : 'batch-result-row';
+                
+                if (result.error) {
+                    row.innerHTML = `
+                        <strong>Row ${result.row}:</strong> Error<br>
+                        <small>Input: ${result.input_lat}, ${result.input_lon}</small><br>
+                        <small style="color: #c53030;">${result.error}</small>
+                    `;
+                } else {
+                    row.innerHTML = `
+                        <strong>Row ${result.row}:</strong> Success<br>
+                        <small>Input: ${result.input_lat.toFixed(4)}, ${result.input_lon.toFixed(4)}</small><br>
+                        <small>Predicted: ${result.predicted_lat.toFixed(4)}, ${result.predicted_lon.toFixed(4)} | Distance: ${result.distance_km.toFixed(2)} km</small>
+                    `;
+                }
+                
+                container.appendChild(row);
+            });
+        }
+
+        document.getElementById('downloadCsvBtn').addEventListener('click', () => {
+            if (!batchResultsData) {
+                return;
+            }
+
+            let csv = 'row,input_latitude,input_longitude,predicted_latitude,predicted_longitude,distance_km,error\n';
+            
+            batchResultsData.forEach(result => {
+                csv += `${result.row},${result.input_lat || ''},${result.input_lon || ''},${result.predicted_lat || ''},${result.predicted_lon || ''},${result.distance_km || ''},${result.error || ''}\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'shark_predictions_batch.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        });
+
+        function showBatchError(message) {
+            const errorDiv = document.getElementById('batchError');
+            errorDiv.textContent = message;
+            showElement('batchError');
+        }
+    </script>
+</body>
+</html>
