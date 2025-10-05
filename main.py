@@ -296,6 +296,3 @@ def download_plot():
             'success': False,
             'error': str(e)
         }), 400
-
-if __name__ == '__main__':
-    pass
