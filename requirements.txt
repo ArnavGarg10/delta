@@ -3,5 +3,4 @@ numpy
 xarray
 matplotlib
 cartopy
-pathlib
 werkzeug
