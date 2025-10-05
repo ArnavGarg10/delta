@@ -4,3 +4,4 @@ xarray
 matplotlib
 cartopy
 werkzeug
+gunicorn
