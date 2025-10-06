@@ -5,3 +5,5 @@ matplotlib
 cartopy
 werkzeug
 gunicorn
+netcdf4
+h5netcdf
